@@ -13,7 +13,7 @@
 # along with kgp. If not, see <https://www.gnu.org/licenses/>.
 
 DESTDIR ?= /usr/local/bin/
-CFLAGS += -O2 -Wall -Wextra -Iinclude
+CFLAGS += -O2 -march=native -Wall -Wextra -Iinclude
 
 .PHONY: all clean
 
