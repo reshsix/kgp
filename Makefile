@@ -13,18 +13,25 @@
 # along with kgp. If not, see <https://www.gnu.org/licenses/>.
 
 DESTDIR ?= /usr/local/bin/
-CFLAGS += -O2 -Wall -Wextra
+CFLAGS += -O2 -Wall -Wextra -Iinclude
 
 .PHONY: all clean
 
-all: kgp
+all: build/kgp
 clean:
-	rm -f kgp
+	rm -rf build
 
-install: kgp
-	install -c kgp $(DESTDIR)
+install: build/kgp
+	install -c build/kgp $(DESTDIR)
 uninstall:
 	rm -f $(shell realpath "$(DESTDIR)/kgp")
 
-kgp: main.c
-	$(CC) $(CFLAGS) $< -o $@
+build:
+	mkdir -p build
+
+build/%.o: src/%.c | build
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/kgp: build/structs.o build/ciphers.o \
+           build/modes.o build/main.o | build
+	$(CC) $(CFLAGS) $^ -o $@
