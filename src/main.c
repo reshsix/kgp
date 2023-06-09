@@ -85,7 +85,7 @@ main(int argc, char *argv[])
             ret = usage();
     }
 
-    void (*run)(u64 *, u64 [static 2], bool) = NULL;
+    void (*run)(b128 *, b128, bool) = NULL;
     if (ret)
     {
         if (strcmp(argv[2], "LAPPLAND") == 0)
@@ -119,12 +119,12 @@ main(int argc, char *argv[])
             ret = error(strerror(EINVAL));
     }
 
-    u64 key[2] = {0, 0};
+    b128 key = {0};
     if (ret)
     {
         for (u8 i = 0; i < 32; i ++)
         {
-            u64 *out = (i < 16) ? &(key[0]) : &(key[1]);
+            u64 *out = (i < 16) ? &(key.u64[0]) : &(key.u64[1]);
             char c = str[i];
             if (c >= '0' && c <= '9')
                 *out += (c - '0') << (i * 4);
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
     }
 
     if (ret)
-        ret = kgp_mode_cbc(a, b, run, key, invert);
+        ret = kgp_mode_cbc128(a, b, run, key, invert);
 
     if (a)
         fclose(a);

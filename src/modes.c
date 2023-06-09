@@ -30,33 +30,33 @@ error(const char *s)
 }
 
 extern bool
-kgp_mode_cbc(FILE *src, FILE *dest, void (*cipher)(u64 *, u64[static 2], bool),
-             u64 key[static 2], bool invert)
+kgp_mode_cbc128(FILE *src, FILE *dest,
+                void (*cipher)(b128 *, b128, bool),
+                b128 key, bool invert)
 {
     bool ret = true;
 
-    u64 vec[2] = {0};
+    b128 vec = {0};
     if (!invert)
     {
-        vec[0] = clock();
-        vec[1] = time(0);
-        cipher(vec, key, false);
-
-        if (fwrite(vec, sizeof(vec), 1, dest) < 1)
+        vec.u64[0] = clock();
+        vec.u64[1] = time(0);
+        cipher(&vec, key, false);
+        if (fwrite(&vec, sizeof(vec), 1, dest) < 1)
             ret = error(strerror(errno));
     }
     else
     {
-        if (fread(vec, 1, sizeof(vec), src) == 0)
+        if (fread(&vec, 1, sizeof(vec), src) == 0)
             if (ferror(src))
                 ret = error(strerror(errno));
     }
 
     while (ret)
     {
-        u64 buf[2] = {0};
+        b128 buf = {0};
 
-        size_t read = fread(buf, 1, sizeof(buf), src);
+        size_t read = fread(&buf, 1, sizeof(buf), src);
         if (read == 0)
         {
             if (ferror(src))
@@ -69,49 +69,48 @@ kgp_mode_cbc(FILE *src, FILE *dest, void (*cipher)(u64 *, u64[static 2], bool),
             if (read != sizeof(buf))
             {
                 size_t pad = sizeof(buf) - read;
-                memset(&(((u8*)buf)[read]), pad, pad);
+                memset(&(buf.u8[read]), pad, pad);
             }
 
-            buf[0] ^= vec[0];
-            buf[1] ^= vec[1];
+            buf.u64[0] ^= vec.u64[0];
+            buf.u64[1] ^= vec.u64[1];
 
-            cipher(buf, key, false);
+            cipher(&buf, key, false);
 
-            vec[0] = buf[0];
-            vec[1] = buf[1];
+            vec.u64[0] = buf.u64[0];
+            vec.u64[1] = buf.u64[1];
 
-            if (fwrite(buf, sizeof(buf), 1, dest) < 1)
+            if (fwrite(&buf, sizeof(buf), 1, dest) < 1)
                 ret = error(strerror(errno));
         }
         else
         {
-            u64 buf2[2] = {buf[0], buf[1]};
+            b128 buf2 = buf;
 
-            cipher(buf, key, true);
+            cipher(&buf, key, true);
 
-            buf[0] ^= vec[0];
-            buf[1] ^= vec[1];
+            buf.u64[0] ^= vec.u64[0];
+            buf.u64[1] ^= vec.u64[1];
 
-            vec[0] = buf2[0];
-            vec[1] = buf2[1];
+            vec.u64[0] = buf2.u64[0];
+            vec.u64[1] = buf2.u64[1];
 
             u8 pad = 0;
             int c = getc(src);
             if (c == EOF)
             {
-                u8 *buf8 = (u8*)buf;
-                pad = buf8[15];
+                pad = buf.u8[15];
                 pad = (pad < 16) ? pad : 0;
                 for (u8 i = 1; i < pad; i++)
                 {
-                    if (buf8[15 - i] != pad)
+                    if (buf.u8[15 - i] != pad)
                         pad = 0;
                 }
             }
             else
                 ungetc(c, src);
 
-            if (fwrite(buf, sizeof(buf) - pad, 1, dest) < 1)
+            if (fwrite(&buf, sizeof(buf) - pad, 1, dest) < 1)
                 ret = error(strerror(errno));
         }
     }

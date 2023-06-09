@@ -59,21 +59,18 @@ lappland_round(u64 data, u64 key)
 }
 
 extern void
-kgp_cipher_lappland(u64 *data, u64 key[static 2], bool invert)
+kgp_cipher_lappland(b128 *data, b128 key, bool invert)
 {
-    struct kgp_struct_feistel lappland = {.function = lappland_round,
-                                          .rounds = 16};
-
     /* Expanding and rotating XOR 128bits key into 16x64bits */
     u64 subkeys[16] = {0};
     for (u8 i = 0; i < 16; i++)
     {
-        u64 x = key[i % 2];
+        u64 x = key.u64[i % 2];
         x ^= ROTL(x, i);
         subkeys[i] = x;
     }
 
-    kgp_struct_feistel(&lappland, subkeys, data, invert);
+    kgp_struct_feistel128(lappland_round, 16, subkeys, data, invert);
 }
 
 static u64
@@ -128,23 +125,20 @@ misaka_round(u64 data, u64 key)
 }
 
 extern void
-kgp_cipher_misaka(u64 *data, u64 key[static 2], bool invert)
+kgp_cipher_misaka(b128 *data, b128 key, bool invert)
 {
-    struct kgp_struct_feistel misaka = {.function = misaka_round,
-                                        .rounds = 16};
-
     /* Expanding 128bits key into 16x64bits */
     u64 subkeys[16] = {0};
     for (u8 i = 0; i < 16; i++)
-        subkeys[i] = ROTL(key[(i % 2)], i) ^ ROTR(key[!(i % 2)], i);
+        subkeys[i] = ROTL(key.u64[(i % 2)], i) ^ ROTR(key.u64[!(i % 2)], i);
 
     /* Key whitening */
-    data[0] ^= key[0];
-    data[1] ^= key[1];
+    data->u64[0] ^= key.u64[0];
+    data->u64[1] ^= key.u64[1];
 
-    kgp_struct_feistel(&misaka, subkeys, data, invert);
+    kgp_struct_feistel128(misaka_round, 16, subkeys, data, invert);
 
     /* Key whitening */
-    data[0] ^= key[0];
-    data[1] ^= key[1];
+    data->u64[0] ^= key.u64[0];
+    data->u64[1] ^= key.u64[1];
 }

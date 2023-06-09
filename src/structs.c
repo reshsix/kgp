@@ -18,24 +18,51 @@ along with kgp. If not, see <https://www.gnu.org/licenses/>.
 #include <kgp/structs.h>
 
 extern void
-kgp_struct_feistel(struct kgp_struct_feistel *f,
-                   u64 *subkeys, u64 *data, bool invert)
+kgp_struct_feistel128(u64 (*f)(u64, u64), u8 rounds,
+                      u64 subkeys[], b128 *data, bool invert)
 {
-    u64 *l = &(data[0]);
-    u64 *r = &(data[1]);
+    u64 *l = &(data->u64[0]);
+    u64 *r = &(data->u64[1]);
 
     u64 tmp = 0;
-    for (u8 i = 0; i < f->rounds; i++)
+    for (u8 i = 0; i < rounds; i++)
     {
         tmp = *l;
         *l = *r;
 
         if (!invert)
-            *r = f->function(*r, subkeys[i]);
+            *r = f(*r, subkeys[i]);
         else
-            *r = f->function(*r, subkeys[f->rounds - i - 1]);
+            *r = f(*r, subkeys[rounds - i - 1]);
 
         *r ^= tmp;
+    }
+
+    tmp = *l;
+    *l = *r;
+    *r = tmp;
+}
+
+extern void
+kgp_struct_feistel256(b128 (*f)(b128, b128), u8 rounds,
+                      b128 subkeys[], b256 *data, bool invert)
+{
+    b128 *l = &(data->b128[0]);
+    b128 *r = &(data->b128[1]);
+
+    b128 tmp = {0};
+    for (u8 i = 0; i < rounds; i++)
+    {
+        tmp = *l;
+        *l = *r;
+
+        if (!invert)
+            *r = f(*r, subkeys[i]);
+        else
+            *r = f(*r, subkeys[rounds - i - 1]);
+
+        r->u64[0] ^= tmp.u64[0];
+        r->u64[1] ^= tmp.u64[1];
     }
 
     tmp = *l;

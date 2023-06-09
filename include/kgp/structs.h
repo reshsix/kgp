@@ -19,13 +19,10 @@ along with kgp. If not, see <https://www.gnu.org/licenses/>.
 
 #include <kgp/types.h>
 
-struct kgp_struct_feistel
-{
-    u8 rounds;
-    u64 (*function)(u64, u64);
-};
+void kgp_struct_feistel128(u64 (*f)(u64, u64), u8 rounds,
+                           u64 subkeys[], b128 *data, bool invert);
 
-void kgp_struct_feistel(struct kgp_struct_feistel *f,
-                        u64 *subkeys, u64 *data, bool invert);
+void kgp_struct_feistel256(b128 (*f)(b128, b128), u8 rounds,
+                           b128 subkeys[], b256 *data, bool invert);
 
 #endif

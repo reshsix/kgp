@@ -29,4 +29,31 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 
+typedef union __attribute__((packed, aligned(8)))
+{
+    u8  u8  [16];
+    u16 u16 [8];
+    u32 u32 [4];
+    u64 u64 [2];
+} b128;
+
+typedef union __attribute__((packed, aligned(8)))
+{
+    u8   u8   [32];
+    u16  u16  [16];
+    u32  u32  [8];
+    u64  u64  [4];
+    b128 b128 [2];
+} b256;
+
+typedef union __attribute__((packed, aligned(8)))
+{
+    u8   u8   [64];
+    u16  u16  [32];
+    u32  u32  [16];
+    u64  u64  [8];
+    b128 b128 [4];
+    b256 b256 [2];
+} b512;
+
 #endif
