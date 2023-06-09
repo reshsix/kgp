@@ -20,5 +20,6 @@ along with kgp. If not, see <https://www.gnu.org/licenses/>.
 #include <kgp/types.h>
 
 void kgp_cipher_lappland(u64 *data, u64 key[static 2], bool invert);
+void kgp_cipher_misaka(u64 *data, u64 key[static 2], bool invert);
 
 #endif

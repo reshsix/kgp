@@ -32,17 +32,38 @@ error(const char *s)
     return false;
 }
 
+static void
+usage_cipher(const char *name, const char *confusion, const char *diffusion,
+             const char *structure, const char *size, const char *bias,
+             const char *avalanche)
+{
+    fprintf(stderr, "%s\n", name);
+    fprintf(stderr, "\tConfusion: %s\n", confusion);
+    fprintf(stderr, "\tDiffusion: %s\n", diffusion);
+    fprintf(stderr, "\tStructure: %s\n", structure);
+    fprintf(stderr, "\tSize: %s\n", size);
+    fprintf(stderr, "\tBias: %s\n", bias);
+    fprintf(stderr, "\tAvalanche: %s\n", avalanche);
+    fprintf(stderr, "\t\n");
+}
+
 static bool
 usage(void)
 {
     fprintf(stderr, "usage: kgp encrypt/decrypt CIPHER INPUT OUTPUT\n");
     fprintf(stderr, "Encrypts/decrypts files using experimental ciphers\n");
-    fprintf(stderr, "\nKey is read as hex from KGPKEY envvar\n");
-    fprintf(stderr, "Ciphers:\n");
-    fprintf(stderr, "\tLAPPLAND\t128bits key and block, 16 rounds Feistel\n");
-    fprintf(stderr, "\t\t\tUses S-box made of Signore dei Lupi lyrics\n");
-    fprintf(stderr, "\t\t\tand rotation XOR\n");
-    fprintf(stderr, "\t\t\tInitializes CBC with TEXAS DEADBEEF\n");
+    fprintf(stderr, "Key is read as hex from KGPKEY envvar\n");
+    fprintf(stderr, "\n[Ciphers]\n\n");
+    usage_cipher("LAPPLAND", "S-box made of Signore dei Lupi lyrics",
+                             "RX operations", "16 rounds Feistel",
+                             "Key 128, Block 128",
+                             "Linear 0.5, Differential 0.148",
+                             "Minimum 0.37, Average 0.49");
+    usage_cipher("MISAKA",   "S-box made of the capacitor charge formula",
+                             "ARX operations", "16 rounds Feistel",
+                             "Key 128, Block 128",
+                             "Linear 0.125, Differential 0.039",
+                             "Minimum 0.44, Average 0.51");
     return false;
 }
 
@@ -69,6 +90,8 @@ main(int argc, char *argv[])
     {
         if (strcmp(argv[2], "LAPPLAND") == 0)
             run = kgp_cipher_lappland;
+        else if (strcmp(argv[2], "MISAKA") == 0)
+            run = kgp_cipher_misaka;
         else
             ret = usage();
     }
@@ -118,10 +141,7 @@ main(int argc, char *argv[])
     }
 
     if (ret)
-    {
-        u64 iv[2] = {0x7E8A5, 0xDEADBEEF};
-        ret = kgp_mode_cbc(a, b, run, iv, key, invert);
-    }
+        ret = kgp_mode_cbc(a, b, run, key, invert);
 
     if (a)
         fclose(a);

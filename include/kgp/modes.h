@@ -21,6 +21,6 @@ along with kgp. If not, see <https://www.gnu.org/licenses/>.
 
 bool kgp_mode_cbc(FILE *src, FILE *dest,
                   void (*cipher)(u64 *, u64 [static 2], bool),
-                  u64 iv[static 2], u64 key[static 2], bool invert);
+                  u64 key[static 2], bool invert);
 
 #endif

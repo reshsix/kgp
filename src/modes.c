@@ -14,6 +14,7 @@ You should have received a copy of the GNU General Public License
 along with kgp. If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include <time.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,18 +30,33 @@ error(const char *s)
 }
 
 extern bool
-kgp_mode_cbc(FILE *src, FILE *dest,
-             void (*cipher)(u64 *, u64[static 2], bool),
-             u64 iv[static 2], u64 key[static 2], bool invert)
+kgp_mode_cbc(FILE *src, FILE *dest, void (*cipher)(u64 *, u64[static 2], bool),
+             u64 key[static 2], bool invert)
 {
     bool ret = true;
 
-    u64 vec[2] = {iv[0], iv[1]};
+    u64 vec[2] = {0};
+    if (!invert)
+    {
+        vec[0] = clock();
+        vec[1] = time(0);
+        cipher(vec, key, false);
+
+        if (fwrite(vec, sizeof(vec), 1, dest) < 1)
+            ret = error(strerror(errno));
+    }
+    else
+    {
+        if (fread(vec, 1, sizeof(vec), src) == 0)
+            if (ferror(src))
+                ret = error(strerror(errno));
+    }
+
     while (ret)
     {
         u64 buf[2] = {0};
 
-        size_t read = fread(&buf, 1, sizeof(buf), src);
+        size_t read = fread(buf, 1, sizeof(buf), src);
         if (read == 0)
         {
             if (ferror(src))
