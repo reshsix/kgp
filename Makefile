@@ -12,7 +12,9 @@
 # You should have received a copy of the GNU General Public License
 # along with kgp. If not, see <https://www.gnu.org/licenses/>.
 
-DESTDIR ?= /usr/local/bin/
+DESTDIR ?= /usr/local/
+DESTDIR := $(shell realpath $(DESTDIR))
+
 CFLAGS += -O2 -march=native -Wall -Wextra -Iinclude
 
 .PHONY: all clean
@@ -22,16 +24,28 @@ clean:
 	rm -rf build
 
 install: build/kgp
-	install -c build/kgp $(DESTDIR)
+	@printf '- Installing libkgp.a into %s/lib\n' $(DESTDIR)
+	@install -c build/kgp $(DESTDIR)/lib
+	@printf '- Installing kgp into %s/bin\n' $(DESTDIR)
+	@install -c build/kgp $(DESTDIR)/bin
 uninstall:
-	rm -f $(shell realpath "$(DESTDIR)/kgp")
+	@printf '- Uninstalling libkgp.a from %s/lib\n' $(DESTDIR)
+	@rm -f "$(DESTDIR)/lib/libkgp.a"
+	@printf '- Uninstalling kgp from %s/bin\n' $(DESTDIR)
+	@rm -f "$(DESTDIR)/kgp"
 
 build:
-	mkdir -p build
+	@mkdir -p build
 
 build/%.o: src/%.c | build
-	$(CC) $(CFLAGS) -c $< -o $@
+	@printf '- Compiling %s\n' $(notdir $@)
+	@$(CC) $(CFLAGS) -c $< -o $@
 
-build/kgp: build/structs.o build/ciphers.o \
-           build/modes.o build/main.o | build
-	$(CC) $(CFLAGS) $^ -o $@
+build/libkgp.a: build/structs.o build/ciphers.o build/modes.o
+	@printf '- Archiving %s\n' $(notdir $@)
+	@ar cr $@ $^
+	@ranlib $@
+
+build/kgp: build/main.o build/libkgp.a | build
+	@printf '- Building %s\n' $(notdir $@)
+	@$(CC) $(CFLAGS) $^ -o $@ -Lbuild -lkgp
