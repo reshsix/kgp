@@ -124,14 +124,14 @@ main(int argc, char *argv[])
     {
         for (u8 i = 0; i < 32; i ++)
         {
-            u64 *out = (i < 16) ? &(key.u64[0]) : &(key.u64[1]);
-            char c = str[i];
+            u64 *out = (i < 16) ? &(key.u64[1]) : &(key.u64[0]);
+            u64 c = str[i];
             if (c >= '0' && c <= '9')
-                *out += (c - '0') << (i * 4);
+                *out |= (c - '0') << (i * 4);
             else if (c >= 'a' && c <= 'f')
-                *out += (c - 'a' + 10) << (i * 4);
+                *out |= (c - 'a' + 10) << (i * 4);
             else if (c >= 'A' && c <= 'F')
-                *out += (c - 'A' + 10) << (i * 4);
+                *out |= (c - 'A' + 10) << (i * 4);
             else
             {
                 ret = error(strerror(EINVAL));
