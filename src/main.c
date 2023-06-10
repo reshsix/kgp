@@ -33,11 +33,13 @@ error(const char *s)
 }
 
 static void
-usage_cipher(const char *name, const char *confusion, const char *diffusion,
+usage_cipher(const char *name, const char *status,
+             const char *confusion, const char *diffusion,
              const char *structure, const char *size, const char *bias,
              const char *avalanche)
 {
     fprintf(stderr, "%s\n", name);
+    fprintf(stderr, "\tStatus: %s\n", status);
     fprintf(stderr, "\tConfusion: %s\n", confusion);
     fprintf(stderr, "\tDiffusion: %s\n", diffusion);
     fprintf(stderr, "\tStructure: %s\n", structure);
@@ -53,13 +55,15 @@ usage(void)
     fprintf(stderr, "usage: kgp encrypt/decrypt CIPHER INPUT OUTPUT\n");
     fprintf(stderr, "Encrypts/decrypts files using experimental ciphers\n");
     fprintf(stderr, "Key is read as hex from KGPKEY envvar\n");
-    fprintf(stderr, "\n[Ciphers]\n\n");
-    usage_cipher("LAPPLAND", "S-box made of Signore dei Lupi lyrics",
+    fprintf(stderr, "\n[ Block ciphers ]\n\n");
+    usage_cipher("LAPPLAND", "\033[31mDeprecated\033[0m",
+                             "S-box made of Signore dei Lupi lyrics",
                              "RX operations", "16 rounds Feistel",
                              "Key 128, Block 128",
                              "Linear 0.5, Differential 0.148",
                              "Minimum 0.37, Average 0.49");
-    usage_cipher("MISAKA",   "S-box made of the capacitor charge formula",
+    usage_cipher("MISAKA",   "\033[32mRecommended\033[0m",
+                             "S-box made of the capacitor charge formula",
                              "ARX operations", "16 rounds Feistel",
                              "Key 128, Block 128",
                              "Linear 0.125, Differential 0.039",
