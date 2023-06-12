@@ -19,7 +19,8 @@ along with kgp. If not, see <https://www.gnu.org/licenses/>.
 
 #include <kgp/types.h>
 
-bool kgp_mode_cbc128(FILE *src, FILE *dest,
+void kgp_mode_cbc128(bool (*in) (void *, u8 *, size_t), void *ctx_in,
+                     bool (*out)(void *, u8 *, size_t), void *ctx_out,
                      void (*cipher)(b128 *, b128, bool),
                      b128 key, bool invert);
 

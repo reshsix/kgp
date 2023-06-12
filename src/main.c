@@ -25,9 +25,11 @@ along with kgp. If not, see <https://www.gnu.org/licenses/>.
 #include <kgp/structs.h>
 #include <kgp/ciphers.h>
 
+static bool eflag = false;
 static bool
 error(const char *s)
 {
+    eflag = true;
     fprintf(stderr, "kgp: %s\n", s);
     return false;
 }
@@ -71,7 +73,7 @@ usage(void)
     return false;
 }
 
-extern bool
+static bool
 parse(int argc, char *argv[], bool *invert,
       void (**cipher128)(b128 *, b128, bool),
       void (**cipher256)(b256 *, b256, bool),
@@ -147,6 +149,66 @@ parse(int argc, char *argv[], bool *invert,
     return ret;
 }
 
+struct context
+{
+    FILE *src, *dest;
+    bool invert;
+};
+
+static bool
+mode_in(void *ctx, u8 *buf, size_t size)
+{
+    bool ret = true;
+
+    struct context *c = ctx;
+
+    size_t read = fread(buf, 1, size, c->src);
+    if (read == 0)
+        ret = (ferror(c->src)) ? error(strerror(errno)) : false;
+
+    if (ret && read != size)
+    {
+        if (!(c->invert))
+        {
+            size_t pad = size - read;
+            memset(&(buf[read]), pad, pad);
+        }
+        else
+            ret = error(strerror(EIO));
+    }
+
+    return ret;
+}
+
+static bool
+mode_out(void *ctx, u8 *buf, size_t size)
+{
+    bool ret = true;
+
+    struct context *c = ctx;
+
+    u8 pad = 0;
+    if (c->invert)
+    {
+        int ch = fgetc(c->src);
+        if (ch == EOF)
+        {
+            pad = buf[size - 1];
+            pad = (pad < size) ? pad : 0;
+            for (u8 i = 1; i < pad; i++)
+                if (buf[size - 1 - i] != pad)
+                    pad = 0;
+        }
+        else
+            ungetc(ch, c->src);
+    }
+
+    if (fwrite(buf, size - pad, 1, c->dest) < 1)
+        ret = error(strerror(errno));
+
+    return ret;
+}
+
 extern int
 main(int argc, char *argv[])
 {
@@ -165,11 +227,14 @@ main(int argc, char *argv[])
 
     (void)(cipher256);
     (void)(key256);
+
+    struct context ctx = {.src = a, .dest = b, .invert = invert};
     if (ret)
-        ret = kgp_mode_cbc128(a, b, cipher128, key128, invert);
+        kgp_mode_cbc128(mode_in, &ctx, mode_out, &ctx,
+                        cipher128, key128, invert);
 
     if (a) fclose(a);
     if (b) fclose(b);
 
-    return (ret) ? EXIT_SUCCESS : EXIT_FAILURE;
+    return (ret && !eflag) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
