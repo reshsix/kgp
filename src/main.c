@@ -71,47 +71,48 @@ usage(void)
     return false;
 }
 
-extern int
-main(int argc, char *argv[])
+extern bool
+parse(int argc, char *argv[], bool *invert,
+      void (**cipher128)(b128 *, b128, bool),
+      void (**cipher256)(b256 *, b256, bool),
+      FILE **a, FILE **b, b128 *key128, b256 *key256)
 {
     bool ret = true;
 
-    setlocale(LC_ALL, "");
+    (void)(cipher256);
+    (void)(key256);
     if (argc != 5)
         ret = usage();
 
-    bool invert = false;
     if (ret)
     {
         if (strcmp(argv[1], "decrypt") == 0)
-            invert = true;
+            *invert = true;
         else if (strcmp(argv[1], "encrypt") != 0)
             ret = usage();
     }
 
-    void (*run)(b128 *, b128, bool) = NULL;
     if (ret)
     {
         if (strcmp(argv[2], "LAPPLAND") == 0)
-            run = kgp_cipher_lappland;
+            *cipher128 = kgp_cipher_lappland;
         else if (strcmp(argv[2], "MISAKA") == 0)
-            run = kgp_cipher_misaka;
+            *cipher128 = kgp_cipher_misaka;
         else
             ret = usage();
     }
 
-    FILE *a = NULL, *b = NULL;
     if (ret)
     {
-        a = fopen(argv[3], "rb");
-        if (!a)
+        *a = fopen(argv[3], "rb");
+        if (!(*a))
             ret = error(strerror(errno));
     }
 
     if (ret)
     {
-        b = fopen(argv[4], "wb");
-        if (!b)
+        *b = fopen(argv[4], "wb");
+        if (!(*b))
             ret = error(strerror(errno));
     }
 
@@ -123,12 +124,11 @@ main(int argc, char *argv[])
             ret = error(strerror(EINVAL));
     }
 
-    b128 key = {0};
     if (ret)
     {
         for (u8 i = 0; i < 32; i ++)
         {
-            u64 *out = (i < 16) ? &(key.u64[1]) : &(key.u64[0]);
+            u64 *out = (i < 16) ? &(key128->u64[1]) : &(key128->u64[0]);
             u64 c = str[i];
             if (c >= '0' && c <= '9')
                 *out |= (c - '0') << (i * 4);
@@ -144,13 +144,32 @@ main(int argc, char *argv[])
         }
     }
 
-    if (ret)
-        ret = kgp_mode_cbc128(a, b, run, key, invert);
+    return ret;
+}
 
-    if (a)
-        fclose(a);
-    if (b)
-        fclose(b);
+extern int
+main(int argc, char *argv[])
+{
+    bool ret = true;
+
+    setlocale(LC_ALL, "");
+
+    bool invert = false;
+    void (*cipher128)(b128 *, b128, bool) = NULL;
+    void (*cipher256)(b256 *, b256, bool) = NULL;
+    FILE *a = NULL, *b = NULL;
+    b128 key128 = {0};
+    b256 key256 = {0};
+    ret = parse(argc, argv, &invert, &cipher128, &cipher256,
+                &a, &b, &key128, &key256);
+
+    (void)(cipher256);
+    (void)(key256);
+    if (ret)
+        ret = kgp_mode_cbc128(a, b, cipher128, key128, invert);
+
+    if (a) fclose(a);
+    if (b) fclose(b);
 
     return (ret) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
