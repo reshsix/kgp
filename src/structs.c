@@ -15,7 +15,6 @@ along with kgp. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <kgp/types.h>
-#include <kgp/structs.h>
 
 extern void
 kgp_struct_feistel128(u64 (*f)(u64, u64), u8 rounds,
