@@ -17,8 +17,8 @@ along with kgp. If not, see <https://www.gnu.org/licenses/>.
 #include <kgp/types.h>
 #include <kgp/structs.h>
 
-#define ROTL(a, b) (((a) << (b)) | ((a) >> ((sizeof(b) * 8)  - (b))))
-#define ROTR(a, b) (((a) >> (b)) | ((a) << ((sizeof(b) * 8)  - (b))))
+#define ROTL(a, b) (((a) << (b)) | ((a) >> ((sizeof(a) * 8)  - (b))))
+#define ROTR(a, b) (((a) >> (b)) | ((a) << ((sizeof(a) * 8)  - (b))))
 
 static u64
 lappland_round(u64 data, u64 key)

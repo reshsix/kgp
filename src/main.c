@@ -63,13 +63,13 @@ usage(void)
                              "RX operations", "16 rounds Feistel",
                              "Key 128, Block 128",
                              "Linear 0.5, Differential 0.148",
-                             "Minimum 0.37, Average 0.49");
-    usage_cipher("MISAKA",   "\033[32mRecommended\033[0m",
+                             "Minimum 0.41, Average 0.50");
+    usage_cipher("MISAKA",   "\033[33mPotential issues\033[0m",
                              "S-box made of the capacitor charge formula",
                              "ARX operations", "16 rounds Feistel",
                              "Key 128, Block 128",
                              "Linear 0.125, Differential 0.039",
-                             "Minimum 0.44, Average 0.51");
+                             "Minimum 0.35, Average 0.50");
     return false;
 }
 
